@@ -11,6 +11,9 @@
 		FF5E4A4B280481730038A90B /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF5E4A4A280481730038A90B /* ContentView.swift */; };
 		FF5E4A4D2804817A0038A90B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FF5E4A4C2804817A0038A90B /* Assets.xcassets */; };
 		FF5E4A502804817A0038A90B /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FF5E4A4F2804817A0038A90B /* Preview Assets.xcassets */; };
+		FF5E4A58280482350038A90B /* MetalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF5E4A57280482350038A90B /* MetalView.swift */; };
+		FF5E4A5A280482520038A90B /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF5E4A59280482520038A90B /* Renderer.swift */; };
+		FF5E4A5E28048C630038A90B /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = FF5E4A5D28048C630038A90B /* Shaders.metal */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -19,6 +22,11 @@
 		FF5E4A4A280481730038A90B /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		FF5E4A4C2804817A0038A90B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		FF5E4A4F2804817A0038A90B /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		FF5E4A57280482350038A90B /* MetalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalView.swift; sourceTree = "<group>"; };
+		FF5E4A59280482520038A90B /* Renderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Renderer.swift; sourceTree = "<group>"; };
+		FF5E4A5B280487B90038A90B /* ShaderDefinitions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ShaderDefinitions.h; sourceTree = "<group>"; };
+		FF5E4A5C280487DB0038A90B /* Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Bridging-Header.h"; sourceTree = "<group>"; };
+		FF5E4A5D28048C630038A90B /* Shaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Shaders.metal; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -51,8 +59,13 @@
 		FF5E4A47280481730038A90B /* SimpleMetalRenderer */ = {
 			isa = PBXGroup;
 			children = (
-				FF5E4A48280481730038A90B /* SimpleMetalRendererApp.swift */,
+				FF5E4A56280482270038A90B /* Utils */,
+				FF5E4A59280482520038A90B /* Renderer.swift */,
 				FF5E4A4A280481730038A90B /* ContentView.swift */,
+				FF5E4A48280481730038A90B /* SimpleMetalRendererApp.swift */,
+				FF5E4A5D28048C630038A90B /* Shaders.metal */,
+				FF5E4A5B280487B90038A90B /* ShaderDefinitions.h */,
+				FF5E4A5C280487DB0038A90B /* Bridging-Header.h */,
 				FF5E4A4C2804817A0038A90B /* Assets.xcassets */,
 				FF5E4A4E2804817A0038A90B /* Preview Content */,
 			);
@@ -65,6 +78,14 @@
 				FF5E4A4F2804817A0038A90B /* Preview Assets.xcassets */,
 			);
 			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		FF5E4A56280482270038A90B /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+				FF5E4A57280482350038A90B /* MetalView.swift */,
+			);
+			path = Utils;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -137,8 +158,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FF5E4A5A280482520038A90B /* Renderer.swift in Sources */,
+				FF5E4A58280482350038A90B /* MetalView.swift in Sources */,
 				FF5E4A4B280481730038A90B /* ContentView.swift in Sources */,
 				FF5E4A49280481730038A90B /* SimpleMetalRendererApp.swift in Sources */,
+				FF5E4A5E28048C630038A90B /* Shaders.metal in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -283,6 +307,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = co.kylestewart.SimpleMetalRenderer;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "SimpleMetalRenderer/Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -312,6 +337,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = co.kylestewart.SimpleMetalRenderer;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "SimpleMetalRenderer/Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
