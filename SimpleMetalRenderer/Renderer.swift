@@ -1,6 +1,5 @@
 import Metal
 import MetalKit
-
 import simd
 
 struct Uniforms {
@@ -19,11 +18,17 @@ class Renderer: NSObject {
     let commandQueue: MTLCommandQueue
 
     // sets the information for the draw (shader functions, color depth) and how to read vertex data
-    let pipelineState: MTLRenderPipelineState
+    let renderPipeline: MTLRenderPipelineState
 
-    // mesh
-    let mesh: MTKMesh
+    // specifies the depth and stencil config used in render pass
+    let depthStencilState: MTLDepthStencilState
 
+    // how we layout the memory for our vertex buffer when loading our mesh
+    let vertexDescriptor: MDLVertexDescriptor
+
+    var meshes: [MTKMesh] = []
+
+    // animation
     var time: Float = 0
     let fps: Int
 
@@ -39,30 +44,38 @@ class Renderer: NSObject {
 
         fps = metalView.preferredFramesPerSecond
 
-        // load mesh to render
-        do {
-            mesh = try MTKMesh(mesh: Primitive.makeCube(device: device, size: 1.0),
-                               device: device)
-        } catch let error {
-            fatalError(error.localizedDescription)
-        }
+        vertexDescriptor = Renderer.buildVertexDescriptor()
+        depthStencilState = Renderer.buildDepthStencilState(device: device)
+        renderPipeline = Renderer.buildRenderPipeline(device: device,
+                                                      mtkView: metalView,
+                                                      vertexDescriptor: vertexDescriptor)
 
-        // build pipeline
-        do {
-            pipelineState = try Renderer.buildRenderPipeline(
-                device: device,
-                pixelFormat: metalView.colorPixelFormat,
-                vertexDescriptor: MTKMetalVertexDescriptorFromModelIO(mesh.vertexDescriptor)!)
-        } catch {
-            fatalError(error.localizedDescription)
-        }
+        super.init()
+
+        meshes = loadModel(device: device)
+    }
+
+    private static func buildVertexDescriptor() -> MDLVertexDescriptor {
+        let vertexDescriptor = MDLVertexDescriptor()
+        vertexDescriptor.attributes[0] = MDLVertexAttribute(name: MDLVertexAttributePosition, format: .float3, offset: 0, bufferIndex: 0)
+        vertexDescriptor.attributes[1] = MDLVertexAttribute(name: MDLVertexAttributeNormal, format: .float3, offset: MemoryLayout<Float>.size * 3, bufferIndex: 0)
+        vertexDescriptor.attributes[2] = MDLVertexAttribute(name: MDLVertexAttributeTextureCoordinate, format: .float2, offset: MemoryLayout<Float>.size * 6, bufferIndex: 0)
+        vertexDescriptor.layouts[0] = MDLVertexBufferLayout(stride: MemoryLayout<Float>.size * 8)
+        return vertexDescriptor
+    }
+
+    private static func buildDepthStencilState(device: MTLDevice) -> MTLDepthStencilState {
+        let depthStencilDescriptor = MTLDepthStencilDescriptor()
+        depthStencilDescriptor.depthCompareFunction = .less
+        depthStencilDescriptor.isDepthWriteEnabled = true
+        return device.makeDepthStencilState(descriptor: depthStencilDescriptor)!
     }
 
     private static func buildRenderPipeline(
         device: MTLDevice,
-        pixelFormat: MTLPixelFormat,
-        vertexDescriptor: MTLVertexDescriptor
-    ) throws -> MTLRenderPipelineState  {
+        mtkView: MTKView,
+        vertexDescriptor: MDLVertexDescriptor
+    ) -> MTLRenderPipelineState  {
         let pipelineDescriptor = MTLRenderPipelineDescriptor()
 
         // add shaders to pipeline
@@ -70,14 +83,36 @@ class Renderer: NSObject {
         pipelineDescriptor.vertexFunction = library?.makeFunction(name: "vertexShader")
         pipelineDescriptor.fragmentFunction = library?.makeFunction(name: "fragmentShader")
 
-        pipelineDescriptor.vertexDescriptor = vertexDescriptor
+        let mtlVertexDescriptor = MTKMetalVertexDescriptorFromModelIO(vertexDescriptor)
+        pipelineDescriptor.vertexDescriptor = mtlVertexDescriptor
 
         // set the output pixel format to match the pixel format of the metal kit view
-        pipelineDescriptor.colorAttachments[0].pixelFormat = pixelFormat
+        pipelineDescriptor.colorAttachments[0].pixelFormat = mtkView.colorPixelFormat
+        pipelineDescriptor.depthAttachmentPixelFormat = mtkView.depthStencilPixelFormat
 
         // compile the configured pipeline descriptor to a  pipeline state object
-        return try device.makeRenderPipelineState(descriptor: pipelineDescriptor)
+        do {
+            return try device.makeRenderPipelineState(descriptor: pipelineDescriptor)
+        } catch {
+            fatalError("Could not create render pipeline state object: \(error)")
+        }
     }
+
+    private func loadModel(device: MTLDevice) -> [MTKMesh] {
+        let modelURL = Bundle.main.url(forResource: "rubber_toy", withExtension: "obj")!
+
+        let bufferAllocator = MTKMeshBufferAllocator(device: device)
+
+        let asset = MDLAsset(url: modelURL, vertexDescriptor: vertexDescriptor, bufferAllocator: bufferAllocator)
+
+        do {
+            let (_, meshes) = try MTKMesh.newMeshes(asset: asset, device: device)
+            return meshes
+        } catch {
+            fatalError("Could not extract meshes from Model I/O asset")
+        }
+    }
+
 }
 
 extension Renderer: MTKViewDelegate {
@@ -113,16 +148,19 @@ extension Renderer: MTKViewDelegate {
         renderEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.size, index: 1)
 
         // enable our render pipeline
-        renderEncoder.setRenderPipelineState(pipelineState)
+        renderEncoder.setRenderPipelineState(renderPipeline)
+        renderEncoder.setDepthStencilState(depthStencilState)
 
         // drawing commands...
-        renderEncoder.setVertexBuffer(mesh.vertexBuffers[0].buffer, offset: 0, index: 0)
-        for submesh in mesh.submeshes {
-            renderEncoder.drawIndexedPrimitives(type: .triangle,
-                                                indexCount: submesh.indexCount,
-                                                indexType: submesh.indexType,
-                                                indexBuffer: submesh.indexBuffer.buffer,
-                                                indexBufferOffset: submesh.indexBuffer.offset)
+        for mesh in meshes {
+            renderEncoder.setVertexBuffer(mesh.vertexBuffers[0].buffer, offset: 0, index: 0)
+            for submesh in mesh.submeshes {
+                renderEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
+                                                    indexCount: submesh.indexCount,
+                                                    indexType: submesh.indexType,
+                                                    indexBuffer: submesh.indexBuffer.buffer,
+                                                    indexBufferOffset: submesh.indexBuffer.offset)
+            }
         }
 
         // we're finished encoding drawing commands
