@@ -1,8 +1,8 @@
 import simd
 
 extension float4 {
-    var xyz: float3 {
-        return float3(x, y, z)
+    var xyz: SIMD3<Float> {
+        return SIMD3<Float>(x, y, z)
     }
 }
 
