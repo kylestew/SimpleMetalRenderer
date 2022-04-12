@@ -1,6 +1,15 @@
 import simd
 
+extension float4 {
+    var xyz: float3 {
+        return float3(x, y, z)
+    }
+}
+
 extension float4x4 {
+    typealias float3 = SIMD3<Float>
+    typealias float4 = SIMD4<Float>
+
     init(scaleBy s: Float) {
         self.init(float4(s, 0, 0, 0),
                   float4(0, s, 0, 0),
@@ -43,5 +52,10 @@ extension float4x4 {
                   float4( 0, yy,  0,  0),
                   float4( 0,  0, zz, zw),
                   float4( 0,  0, wz,  0))
+    }
+
+    var normalMatrix: float3x3 {
+        let upperLeft = float3x3(self[0].xyz, self[1].xyz, self[2].xyz)
+        return upperLeft.transpose.inverse
     }
 }

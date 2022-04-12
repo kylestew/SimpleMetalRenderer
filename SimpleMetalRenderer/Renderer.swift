@@ -3,8 +3,9 @@ import MetalKit
 import simd
 
 struct Uniforms {
-    var modelViewMatrix: float4x4
-    var projectionMatrix: float4x4
+    var modelMatrix: float4x4
+    var viewProjectionMatrix: float4x4
+    var normalMatrix: float3x3
 }
 
 class Renderer: NSObject {
@@ -23,8 +24,13 @@ class Renderer: NSObject {
     // specifies the depth and stencil config used in render pass
     let depthStencilState: MTLDepthStencilState
 
+    // defines how a texture should be sampled
+    let samplerState: MTLSamplerState
+
     // how we layout the memory for our vertex buffer when loading our mesh
     let vertexDescriptor: MDLVertexDescriptor
+
+    var baseColorTexture: MTLTexture?
 
     var meshes: [MTKMesh] = []
 
@@ -49,10 +55,11 @@ class Renderer: NSObject {
         renderPipeline = Renderer.buildRenderPipeline(device: device,
                                                       mtkView: metalView,
                                                       vertexDescriptor: vertexDescriptor)
+        samplerState = Renderer.buildSamplerState(device: device)
 
         super.init()
 
-        meshes = loadModel(device: device)
+        loadResources()
     }
 
     private static func buildVertexDescriptor() -> MDLVertexDescriptor {
@@ -62,6 +69,15 @@ class Renderer: NSObject {
         vertexDescriptor.attributes[2] = MDLVertexAttribute(name: MDLVertexAttributeTextureCoordinate, format: .float2, offset: MemoryLayout<Float>.size * 6, bufferIndex: 0)
         vertexDescriptor.layouts[0] = MDLVertexBufferLayout(stride: MemoryLayout<Float>.size * 8)
         return vertexDescriptor
+    }
+
+    private static func buildSamplerState(device: MTLDevice) -> MTLSamplerState {
+        let samplerDescriptor = MTLSamplerDescriptor()
+        samplerDescriptor.normalizedCoordinates = true
+        samplerDescriptor.minFilter = .linear
+        samplerDescriptor.magFilter = .linear
+        samplerDescriptor.mipFilter = .linear
+        return device.makeSamplerState(descriptor: samplerDescriptor)!
     }
 
     private static func buildDepthStencilState(device: MTLDevice) -> MTLDepthStencilState {
@@ -98,19 +114,22 @@ class Renderer: NSObject {
         }
     }
 
-    private func loadModel(device: MTLDevice) -> [MTKMesh] {
+    private func loadResources() {
         let modelURL = Bundle.main.url(forResource: "rubber_toy", withExtension: "obj")!
-
         let bufferAllocator = MTKMeshBufferAllocator(device: device)
-
         let asset = MDLAsset(url: modelURL, vertexDescriptor: vertexDescriptor, bufferAllocator: bufferAllocator)
-
         do {
-            let (_, meshes) = try MTKMesh.newMeshes(asset: asset, device: device)
-            return meshes
+            (_, meshes) = try MTKMesh.newMeshes(asset: asset, device: device)
         } catch {
             fatalError("Could not extract meshes from Model I/O asset")
         }
+
+        let textureLoader = MTKTextureLoader(device: device)
+        let options: [MTKTextureLoader.Option: Any] = [.generateMipmaps: true, .SRGB: true]
+        baseColorTexture = try? textureLoader.newTexture(name: "tiles_baseColor",
+                                                         scaleFactor: 1.0,
+                                                         bundle: nil,
+                                                         options: options)
     }
 
 }
@@ -135,19 +154,24 @@ extension Renderer: MTKViewDelegate {
         let modelMatrix = float4x4(rotationAbout: float3(0, 1, 0), by: angle) * float4x4(scaleBy: 0.5)
 
         let viewMatrix = float4x4(translationBy: float3(0, 0, -2))
-        let modelViewMatrix = viewMatrix * modelMatrix
-
         let aspectRatio = Float(view.drawableSize.width / view.drawableSize.height)
         let projectionMatrix = float4x4(perspectiveProjectionFov: Float.pi / 3,
                                         aspectRatio: aspectRatio,
                                         nearZ: 0.1,
                                         farZ: 100)
+        let viewProjectionMatrix = projectionMatrix * viewMatrix
 
-        var uniforms = Uniforms(modelViewMatrix: modelViewMatrix, projectionMatrix: projectionMatrix)
+        var uniforms = Uniforms(modelMatrix: modelMatrix,
+                                viewProjectionMatrix: viewProjectionMatrix,
+                                normalMatrix: modelMatrix.normalMatrix)
 
         renderEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.size, index: 1)
 
-        // enable our render pipeline
+        // bind texture and sampler
+        renderEncoder.setFragmentTexture(baseColorTexture, index: 0)
+        renderEncoder.setFragmentSamplerState(samplerState, index: 0)
+
+        // enable our render pipeline (with depth stencil)
         renderEncoder.setRenderPipelineState(renderPipeline)
         renderEncoder.setDepthStencilState(depthStencilState)
 
