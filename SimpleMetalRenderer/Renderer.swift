@@ -2,10 +2,20 @@ import Metal
 import MetalKit
 import simd
 
-struct Uniforms {
+struct VertexUniforms {
     var modelMatrix: float4x4
     var viewProjectionMatrix: float4x4
     var normalMatrix: float3x3
+}
+
+struct FragmentUniforms {
+    var cameraWorldPosition = SIMD3<Float>(0, 0, 0)
+    var ambientLightColor = SIMD3<Float>(0, 0, 0)
+    var specularColor = SIMD3<Float>(1, 1, 1)
+    var specularPower = Float(1)
+    var light0 = Light()
+    var light1 = Light()
+    var light2 = Light()
 }
 
 class Renderer: NSObject {
@@ -151,9 +161,12 @@ extension Renderer: MTKViewDelegate {
 
         time += 1 / Float(fps)
         let angle = -time
-        let modelMatrix = float4x4(rotationAbout: float3(0, 1, 0), by: angle) * float4x4(scaleBy: 0.5)
+        let modelMatrix = float4x4(rotationAbout: float3(0, 1, 0), by: angle)
+                * float4x4(scaleBy: 0.5)
+                * float4x4(translationBy: float3(0, -0.5, 0))
 
-        let viewMatrix = float4x4(translationBy: float3(0, 0, -2))
+        let cameraWorldPosition = float3(0, 0, 2)
+        let viewMatrix = float4x4(translationBy: -cameraWorldPosition)
         let aspectRatio = Float(view.drawableSize.width / view.drawableSize.height)
         let projectionMatrix = float4x4(perspectiveProjectionFov: Float.pi / 3,
                                         aspectRatio: aspectRatio,
@@ -161,11 +174,27 @@ extension Renderer: MTKViewDelegate {
                                         farZ: 100)
         let viewProjectionMatrix = projectionMatrix * viewMatrix
 
-        var uniforms = Uniforms(modelMatrix: modelMatrix,
-                                viewProjectionMatrix: viewProjectionMatrix,
-                                normalMatrix: modelMatrix.normalMatrix)
+        var uniforms = VertexUniforms(modelMatrix: modelMatrix,
+                                      viewProjectionMatrix: viewProjectionMatrix,
+                                      normalMatrix: modelMatrix.normalMatrix)
 
-        renderEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.size, index: 1)
+        renderEncoder.setVertexBytes(&uniforms, length: MemoryLayout<VertexUniforms>.size, index: 1)
+
+        var material = Material()
+        material.specularPower = 200
+        material.specularColor = float3(0.8, 0.8, 0.8)
+        let light0 = Light(worldPosition: float3(2, 2, 2), color: float3(1, 0, 0))
+        let light1 = Light(worldPosition: float3(-2, 2, 2), color: float3(0, 1, 0))
+        let light2 = Light(worldPosition: float3(0, -2, 2), color: float3(0, 0, 1))
+
+        var fragmentUniforms = FragmentUniforms(cameraWorldPosition: cameraWorldPosition,
+                                                ambientLightColor: float3(0.1, 0.1, 0.1),
+                                                specularColor: material.specularColor,
+                                                specularPower: material.specularPower,
+                                                light0: light0,
+                                                light1: light1,
+                                                light2: light2)
+        renderEncoder.setFragmentBytes(&fragmentUniforms, length: MemoryLayout<FragmentUniforms>.size, index: 0)
 
         // bind texture and sampler
         renderEncoder.setFragmentTexture(baseColorTexture, index: 0)

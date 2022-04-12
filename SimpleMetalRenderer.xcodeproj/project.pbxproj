@@ -17,6 +17,7 @@
 		FF5E4A58280482350038A90B /* MetalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF5E4A57280482350038A90B /* MetalView.swift */; };
 		FF5E4A5A280482520038A90B /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF5E4A59280482520038A90B /* Renderer.swift */; };
 		FF5E4A5E28048C630038A90B /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = FF5E4A5D28048C630038A90B /* Shaders.metal */; };
+		FFF2EDA82805E34000988B44 /* Scene.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFF2EDA72805E34000988B44 /* Scene.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -33,6 +34,7 @@
 		FF5E4A5B280487B90038A90B /* ShaderDefinitions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ShaderDefinitions.h; sourceTree = "<group>"; };
 		FF5E4A5C280487DB0038A90B /* Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Bridging-Header.h"; sourceTree = "<group>"; };
 		FF5E4A5D28048C630038A90B /* Shaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Shaders.metal; sourceTree = "<group>"; };
+		FFF2EDA72805E34000988B44 /* Scene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Scene.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -67,6 +69,7 @@
 			children = (
 				FF4C47C3280517100008516D /* rubber_toy.obj */,
 				FF5E4A56280482270038A90B /* Utils */,
+				FFF2EDA72805E34000988B44 /* Scene.swift */,
 				FF5E4A59280482520038A90B /* Renderer.swift */,
 				FF4C47BF280502A30008516D /* Primitive.swift */,
 				FF5E4A4A280481730038A90B /* ContentView.swift */,
@@ -172,6 +175,7 @@
 				FF4C47C0280502A30008516D /* Primitive.swift in Sources */,
 				FF5E4A58280482350038A90B /* MetalView.swift in Sources */,
 				FF5E4A4B280481730038A90B /* ContentView.swift in Sources */,
+				FFF2EDA82805E34000988B44 /* Scene.swift in Sources */,
 				FF4C47C2280511730008516D /* MatrixUtils.swift in Sources */,
 				FF5E4A49280481730038A90B /* SimpleMetalRendererApp.swift in Sources */,
 				FF5E4A5E28048C630038A90B /* Shaders.metal in Sources */,
