@@ -1,7 +1,16 @@
 import Metal
 import MetalKit
 
+import simd
+
+struct Uniforms {
+    var modelViewMatrix: float4x4
+    var projectionMatrix: float4x4
+}
+
 class Renderer: NSObject {
+
+    typealias float3 = SIMD3<Float>
 
     // reference to GPU hardware
     let device: MTLDevice
@@ -12,7 +21,11 @@ class Renderer: NSObject {
     // sets the information for the draw (shader functions, color depth) and how to read vertex data
     let pipelineState: MTLRenderPipelineState
 
-    let vertexBuffer: MTLBuffer
+    // mesh
+    let mesh: MTKMesh
+
+    var time: Float = 0
+    let fps: Int
 
     init?(metalView: MTKView) {
         guard
@@ -24,34 +37,31 @@ class Renderer: NSObject {
         self.commandQueue = commandQueue
         metalView.device = device
 
-        vertexBuffer = Renderer.generateMesh(device: device)
+        fps = metalView.preferredFramesPerSecond
 
+        // load mesh to render
+        do {
+            mesh = try MTKMesh(mesh: Primitive.makeCube(device: device, size: 1.0),
+                               device: device)
+        } catch let error {
+            fatalError(error.localizedDescription)
+        }
+
+        // build pipeline
         do {
             pipelineState = try Renderer.buildRenderPipeline(
                 device: device,
-                pixelFormat: metalView.colorPixelFormat)
-//                vertexDescriptor: MTKMetalVertexDescriptorFromModelIO(mdlMesh.vertexDescriptor)!)
+                pixelFormat: metalView.colorPixelFormat,
+                vertexDescriptor: MTKMetalVertexDescriptorFromModelIO(mesh.vertexDescriptor)!)
         } catch {
             fatalError(error.localizedDescription)
         }
     }
 
-    private static func generateMesh(device: MTLDevice) -> MTLBuffer {
-        let vertices = [
-            Vertex(color: [1, 0, 0, 1], pos: [-1, -1]),
-            Vertex(color: [0, 1, 0, 1], pos: [0, 1]),
-            Vertex(color: [0, 0, 1, 1], pos: [1, -1])
-        ]
-
-        return device.makeBuffer(bytes: vertices,
-                                 length: vertices.count * MemoryLayout<Vertex>.stride,
-                                 options: [])!
-    }
-
     private static func buildRenderPipeline(
         device: MTLDevice,
-        pixelFormat: MTLPixelFormat
-//        vertexDescriptor: MTLVertexDescriptor
+        pixelFormat: MTLPixelFormat,
+        vertexDescriptor: MTLVertexDescriptor
     ) throws -> MTLRenderPipelineState  {
         let pipelineDescriptor = MTLRenderPipelineDescriptor()
 
@@ -60,7 +70,7 @@ class Renderer: NSObject {
         pipelineDescriptor.vertexFunction = library?.makeFunction(name: "vertexShader")
         pipelineDescriptor.fragmentFunction = library?.makeFunction(name: "fragmentShader")
 
-//        pipelineDescriptor.vertexDescriptor = vertexDescriptor
+        pipelineDescriptor.vertexDescriptor = vertexDescriptor
 
         // set the output pixel format to match the pixel format of the metal kit view
         pipelineDescriptor.colorAttachments[0].pixelFormat = pixelFormat
@@ -85,12 +95,35 @@ extension Renderer: MTKViewDelegate {
             return
         }
 
+        time += 1 / Float(fps)
+        let angle = -time
+        let modelMatrix = float4x4(rotationAbout: float3(0, 1, 0), by: angle) * float4x4(scaleBy: 0.5)
+
+        let viewMatrix = float4x4(translationBy: float3(0, 0, -2))
+        let modelViewMatrix = viewMatrix * modelMatrix
+
+        let aspectRatio = Float(view.drawableSize.width / view.drawableSize.height)
+        let projectionMatrix = float4x4(perspectiveProjectionFov: Float.pi / 3,
+                                        aspectRatio: aspectRatio,
+                                        nearZ: 0.1,
+                                        farZ: 100)
+
+        var uniforms = Uniforms(modelViewMatrix: modelViewMatrix, projectionMatrix: projectionMatrix)
+
+        renderEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.size, index: 1)
+
         // enable our render pipeline
         renderEncoder.setRenderPipelineState(pipelineState)
 
         // drawing commands...
-        renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
-        renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
+        renderEncoder.setVertexBuffer(mesh.vertexBuffers[0].buffer, offset: 0, index: 0)
+        for submesh in mesh.submeshes {
+            renderEncoder.drawIndexedPrimitives(type: .triangle,
+                                                indexCount: submesh.indexCount,
+                                                indexType: submesh.indexType,
+                                                indexBuffer: submesh.indexBuffer.buffer,
+                                                indexBufferOffset: submesh.indexBuffer.offset)
+        }
 
         // we're finished encoding drawing commands
         renderEncoder.endEncoding()

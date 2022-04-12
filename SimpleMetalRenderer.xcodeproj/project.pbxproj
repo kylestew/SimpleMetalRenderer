@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		FF4C47C0280502A30008516D /* Primitive.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF4C47BF280502A30008516D /* Primitive.swift */; };
+		FF4C47C2280511730008516D /* MatrixUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF4C47C1280511730008516D /* MatrixUtils.swift */; };
 		FF5E4A49280481730038A90B /* SimpleMetalRendererApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF5E4A48280481730038A90B /* SimpleMetalRendererApp.swift */; };
 		FF5E4A4B280481730038A90B /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF5E4A4A280481730038A90B /* ContentView.swift */; };
 		FF5E4A4D2804817A0038A90B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FF5E4A4C2804817A0038A90B /* Assets.xcassets */; };
@@ -17,6 +19,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		FF4C47BF280502A30008516D /* Primitive.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Primitive.swift; sourceTree = "<group>"; };
+		FF4C47C1280511730008516D /* MatrixUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatrixUtils.swift; sourceTree = "<group>"; };
 		FF5E4A45280481730038A90B /* SimpleMetalRenderer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SimpleMetalRenderer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FF5E4A48280481730038A90B /* SimpleMetalRendererApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimpleMetalRendererApp.swift; sourceTree = "<group>"; };
 		FF5E4A4A280481730038A90B /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -61,6 +65,7 @@
 			children = (
 				FF5E4A56280482270038A90B /* Utils */,
 				FF5E4A59280482520038A90B /* Renderer.swift */,
+				FF4C47BF280502A30008516D /* Primitive.swift */,
 				FF5E4A4A280481730038A90B /* ContentView.swift */,
 				FF5E4A48280481730038A90B /* SimpleMetalRendererApp.swift */,
 				FF5E4A5D28048C630038A90B /* Shaders.metal */,
@@ -84,6 +89,7 @@
 			isa = PBXGroup;
 			children = (
 				FF5E4A57280482350038A90B /* MetalView.swift */,
+				FF4C47C1280511730008516D /* MatrixUtils.swift */,
 			);
 			path = Utils;
 			sourceTree = "<group>";
@@ -159,8 +165,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				FF5E4A5A280482520038A90B /* Renderer.swift in Sources */,
+				FF4C47C0280502A30008516D /* Primitive.swift in Sources */,
 				FF5E4A58280482350038A90B /* MetalView.swift in Sources */,
 				FF5E4A4B280481730038A90B /* ContentView.swift in Sources */,
+				FF4C47C2280511730008516D /* MatrixUtils.swift in Sources */,
 				FF5E4A49280481730038A90B /* SimpleMetalRendererApp.swift in Sources */,
 				FF5E4A5E28048C630038A90B /* Shaders.metal in Sources */,
 			);
